@@ -7,7 +7,7 @@ Agent Skill to build production-ready multi-agent applications with Alibaba's Ag
 ## How to install:
 
 ```bash
-npx skills add https://github.com/changxubo/agentscope-python --skill agentscope-python
+npx skills add https://github.com/changxubo/agentscope-python --skill agentscope
 ```
 ## Sample usage:
 
