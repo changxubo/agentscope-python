@@ -18,7 +18,9 @@ from agentscope.agent import ReActAgent
 from agentscope.model import DashScopeChatModel
 from agentscope.formatter import DashScopeChatFormatter
 from agentscope.memory import InMemoryMemory
-from agentscope.tool import Toolkit, execute_python_code
+from agentscope.tool import Toolkit
+# SECURITY: execute_python_code excluded - allows arbitrary code execution
+# Add safe custom tools instead
 from agentscope.message import Msg
 
 
@@ -30,9 +32,19 @@ async def main():
         print("Please set DASHSCOPE_API_KEY environment variable")
         return
     
-    # Create toolkit with Python execution
+    # Create toolkit with safe custom tools only
+    # SECURITY: Do NOT use execute_python_code in production
     toolkit = Toolkit()
-    toolkit.register_tool_function(execute_python_code)
+    
+    # Define a safe custom tool
+    def calculate_fibonacci(n: int) -> list:
+        """Calculate first n Fibonacci numbers."""
+        fib = [0, 1]
+        for _ in range(n - 2):
+            fib.append(fib[-1] + fib[-2])
+        return fib[:n]
+    
+    toolkit.register_tool_function(calculate_fibonacci)
     
     # Create ReActAgent
     agent = ReActAgent(
