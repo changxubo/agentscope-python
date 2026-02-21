@@ -7,6 +7,10 @@ Agent Skill to build production-ready multi-agent applications with Alibaba's Ag
 ## How to install:
 
 ```bash
+npx skills add wshobson/agents@changelog-automation
+```
+SECURITY WARNING: Skills can execute code on your behalf. Before installing, we recommend you audit the skill's source code and only install from trusted sources. See the Socket Security Report for this skill for more details.
+```bash
 npx skills add https://github.com/changxubo/agentscope-python --skill agentscope
 ```
 ## Sample usage:
