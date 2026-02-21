@@ -9,6 +9,14 @@ Usage:
     2. Modify sys_prompt for your use case
     3. Add custom tools to the toolkit
     4. Run: python react_agent_template.py
+
+SECURITY WARNING:
+This template provides a secure starting point for building ReAct agents.
+By default, it EXCLUDES dangerous tools like `execute_python_code` and
+`execute_shell_command` that allow arbitrary code execution.
+
+DO NOT enable these tools in production environments. Instead, build
+specific, safe custom tools with input validation as shown in this template.
 """
 
 import asyncio
