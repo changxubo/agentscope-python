@@ -436,6 +436,15 @@ toolkit.register_tool_function(read_allowed_file)
 5. **Use MCP Tools**: Prefer well-audited MCP server tools over custom implementations
 6. **Never Expose Shell/Code Execution**: Even with "validation", these are too risky
 
+### Mitigating Indirect Prompt Injection
+
+When using tools that fetch content from external sources (`web_search`, `web_fetch`), be aware of the risk of indirect prompt injection. Malicious content on a webpage could try to trick the agent into performing unintended actions.
+
+**Mitigation Strategies:**
+- **Skeptical Agent Prompting**: Instruct your agent to be skeptical of instructions found in web content and to seek confirmation before performing sensitive actions.
+- **User Confirmation**: For critical actions (e.g., making a purchase, sending an email), implement a user confirmation step before execution.
+- **Restrictive Tool Permissions**: Limit the permissions of the tools available to the agent. Don't give an agent that browses the web the ability to execute shell commands.
+
 ### Report: Socket Security Analysis
 
 A security audit identified critical vulnerabilities in template code:
