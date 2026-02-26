@@ -449,7 +449,7 @@ When using tools that fetch content from external sources (`web_search`, `web_fe
 
 A security audit identified critical vulnerabilities in template code:
 
-- **Finding 1**: `execute_shell_command` allowed arbitrary command execution
+- **Finding 1**: `execute_shell_command` allowed arbitrary command injection
 - **Finding 2**: `execute_python_code` allowed arbitrary code execution
 - **Status**: All templates updated to use safe alternatives
 
